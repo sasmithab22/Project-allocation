@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block extra_styles %}
+<style>
+.admin-wrap { padding: 40px 0 80px; }
+.section-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.section-title span { color: var(--accent); }
+.upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 48px 32px;
+    text-align: center;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(233,69,96,0.04);
+}
+.upload-zone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+.upload-icon { font-size: 48px; margin-bottom: 16px; }
+.upload-zone h3 { font-size: 18px; margin-bottom: 8px; }
+.upload-zone p { color: var(--muted); font-size: 14px; }
+.upload-zone .csv-hint {
+    display: inline-block;
+    margin-top: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 6px;
+    color: var(--accent3);
+}
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+.stat-card { border-left: 3px solid var(--border); }
+.stat-card.red { border-left-color: var(--accent); }
+.stat-card.purple { border-left-color: #7c3aed; }
+.stat-card.cyan { border-left-color: var(--accent3); }
+.stat-card.green { border-left-color: var(--success); }
+.stat-number.red { color: var(--accent); }
+.stat-number.purple { color: #a78bfa; }
+.stat-number.cyan { color: var(--accent3); }
+.stat-number.green { color: var(--success); }
+.problems-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+.problem-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    transition: border-color 0.2s;
+    position: relative;
+}
+.problem-item.taken {
+    opacity: 0.6;
+    border-color: rgba(233,69,96,0.2);
+}
+.problem-item.taken::after {
+    content: 'TAKEN';
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+}
+.problem-id {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+.problem-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+.problem-desc { font-size: 12px; color: var(--muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.registrations-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.registrations-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--surface2);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+}
+.registrations-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    vertical-align: middle;
+}
+.registrations-table tr:hover td { background: rgba(255,255,255,0.02); }
+.roll-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: rgba(233,69,96,0.1);
+    border: 1px solid rgba(233,69,96,0.3);
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+}
+.table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+.action-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #059669; }
+.btn-warning { background: var(--warning); color: #111; }
+.btn-warning:hover { background: #d97706; }
+.btn-danger { background: rgba(233,69,96,0.1); color: var(--accent); border: 1px solid rgba(233,69,96,0.3); }
+.btn-danger:hover { background: rgba(233,69,96,0.2); }
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.progress-bar-wrap {
+    background: var(--surface2);
+    border-radius: 8px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    transition: width 0.5s ease;
+}
+@media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 500px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container admin-wrap">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; flex-wrap:wrap; gap:16px;">
+        <div>
+            <h1 style="font-size:32px; font-weight:800; letter-spacing:-0.02em;">Admin <span class="highlight">Dashboard</span></h1>
+            <p style="color:var(--muted); margin-top:4px;">Manage problem statements and view registrations</p>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <a href="/admin/logout" class="btn btn-ghost">← Logout</a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+        <div class="stat-card card red">
+            <div class="stat-number red mono" id="statProblems">{{ problems|length }}</div>
+            <div class="stat-label">Total Problems</div>
+        </div>
+        <div class="stat-card card purple">
+            <div class="stat-number purple mono" id="statRegistered">{{ registrations|length }}</div>
+            <div class="stat-label">Registered</div>
+        </div>
+        <div class="stat-card card cyan">
+            <div class="stat-number cyan mono" id="statAvailable">{{ problems|length - taken|length }}</div>
+            <div class="stat-label">Available</div>
+        </div>
+        <div class="stat-card card green">
+            <div class="stat-number green mono" id="statTaken">{{ taken|length }}</div>
+            <div class="stat-label">Claimed</div>
+        </div>
+    </div>
+
+    <!-- Upload -->
+    <div class="card" style="margin-bottom:32px;">
+        <div class="section-title">📤 Upload <span>Problem Statements</span></div>
+        <div class="upload-zone" id="uploadZone">
+            <input type="file" id="csvFile" accept=".csv">
+            <div class="upload-icon">📄</div>
+            <h3>Drop your CSV here or click to browse</h3>
+            <p>The CSV should have columns: <strong>title</strong>, <strong>description</strong>, <strong>domain</strong></p>
+            <div class="csv-hint">title, description, domain</div>
+        </div>
+        <div style="display:flex; gap:12px; margin-top:16px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="uploadCSV()">⬆ Upload & Replace Problems</button>
+            <button class="btn btn-danger" onclick="clearProblems()">🗑 Clear All Problems</button>
+        </div>
+        <div id="uploadStatus" style="margin-top:12px; font-size:13px; color:var(--muted);"></div>
+    </div>
+
+    <!-- Problems Grid -->
+    <div class="card" style="margin-bottom:32px;">
+        <div class="section-title" style="justify-content:space-between;">
+            <div>📋 Problem <span>Statements</span></div>
+            <div id="problemsCount" class="badge badge-accent">{{ problems|length }} total</div>
+        </div>
+        {% if problems %}
+        <div class="progress-bar-wrap" style="margin-bottom:20px;">
+            <div class="progress-bar" id="progressBar" style="width: {{ (taken|length / problems|length * 100) if problems else 0 }}%"></div>
+        </div>
+        <div class="problems-grid" id="problemsGrid">
+            {% for p in problems %}
+            <div class="problem-item {% if p.id in taken %}taken{% endif %}">
+                <div class="problem-id">#{{ p.id }} · {{ p.domain }}</div>
+                <div class="problem-title">{{ p.title }}</div>
+                {% if p.description %}
+                <div class="problem-desc">{{ p.description }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>No problem statements uploaded yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Registrations -->
+    <div class="card">
+        <div class="section-title" style="justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <div>👥 Student <span>Registrations</span></div>
+            <div class="action-bar">
+                <a href="/admin/download?format=excel" class="btn btn-success">⬇ Download Excel</a>
+                <a href="/admin/download?format=csv" class="btn btn-secondary">⬇ Download CSV</a>
+                <button class="btn btn-danger" onclick="clearRegistrations()">🗑 Clear All</button>
+            </div>
+        </div>
+        {% if registrations %}
+        <div class="table-wrap">
+            <table class="registrations-table">
+                <thead>
+                    <tr>
+                        <th>Roll</th>
+                        <th>Name</th>
+                        <th>Branch</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
+                        <th>Problem</th>
+                        <th>Registered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set problems_map = {} %}
+                    {% for p in problems %}{% set _ = problems_map.update({p.id: p}) %}{% endfor %}
+                    {% for roll_no in registrations.keys()|sort(attribute=int) %}
+                    {% set reg = registrations[roll_no] %}
+                    {% set prob = problems_map.get(reg.problem_id, {}) %}
+                    <tr>
+                        <td><div class="roll-badge">{{ roll_no }}</div></td>
+                        <td><strong>{{ reg.name }}</strong></td>
+                        <td><span class="badge badge-purple">{{ reg.branch }}</span></td>
+                        <td style="color:var(--accent3); font-size:13px;">{{ reg.email }}</td>
+                        <td style="font-family:'Space Mono',monospace; font-size:12px;">{{ reg.mobile }}</td>
+                        <td>
+                            <div style="font-size:12px; color:var(--muted);">#{{ reg.problem_id }}</div>
+                            <div style="font-size:13px; max-width:200px;">{{ prob.get('title', 'N/A') if prob else 'N/A' }}</div>
+                        </td>
+                        <td style="font-size:12px; color:var(--muted);">{{ reg.timestamp }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🎓</div>
+            <p>No students have registered yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); document.getElementById('csvFile').files = e.dataTransfer.files; uploadCSV(); });
+
+async function uploadCSV() {
+    const file = document.getElementById('csvFile').files[0];
+    if (!file) return showToast('Please select a CSV file', 'error');
+    const status = document.getElementById('uploadStatus');
+    status.textContent = '⏳ Uploading...';
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+        const res = await fetch('/admin/upload_csv', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`✓ Uploaded ${data.count} problem statements!`, 'success');
+            status.textContent = `Last upload: ${data.count} problems loaded`;
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.error || 'Upload failed', 'error');
+            status.textContent = '';
+        }
+    } catch(e) { showToast('Upload error', 'error'); }
+}
+
+async function clearProblems() {
+    if (!confirm('Clear all problem statements? This cannot be undone.')) return;
+    const res = await fetch('/admin/clear_problems', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) { showToast('Problems cleared', 'info'); setTimeout(() => location.reload(), 1000); }
+}
+
+async function clearRegistrations() {
+    if (!confirm('Clear ALL student registrations? This cannot be undone.')) return;
+    const res = await fetch('/admin/clear_registrations', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) { showToast('Registrations cleared', 'info'); setTimeout(() => location.reload(), 1000); }
+}
+</script>
+{% endblock %}

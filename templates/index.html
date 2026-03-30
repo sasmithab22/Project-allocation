@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}ProjectAlloc — Home{% endblock %}
+{% block extra_styles %}
+<style>
+.hero {
+    min-height: calc(100vh - 65px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px;
+    position: relative;
+}
+.hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+        linear-gradient(rgba(42,42,58,0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(42,42,58,0.4) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    pointer-events: none;
+}
+.hero-content { position: relative; z-index: 1; max-width: 720px; }
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(233,69,96,0.1);
+    border: 1px solid rgba(233,69,96,0.3);
+    border-radius: 50px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s ease both;
+}
+.hero h1 {
+    font-size: clamp(40px, 7vw, 80px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    animation: fadeUp 0.6s ease 0.1s both;
+}
+.hero p {
+    color: var(--muted);
+    font-size: 18px;
+    margin-top: 20px;
+    line-height: 1.6;
+    animation: fadeUp 0.6s ease 0.2s both;
+}
+.hero-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 40px;
+    animation: fadeUp 0.6s ease 0.3s both;
+    flex-wrap: wrap;
+}
+.btn-xl {
+    padding: 16px 36px;
+    font-size: 16px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+.btn-student {
+    background: linear-gradient(135deg, #7c3aed, #06b6d4);
+    color: white;
+    border: none;
+}
+.btn-student:hover { opacity: 0.9; transform: translateY(-2px); }
+.btn-admin {
+    background: var(--accent);
+    color: white;
+}
+.features {
+    padding: 80px 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+.feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    animation: fadeUp 0.6s ease both;
+}
+.feature-card:nth-child(2) { animation-delay: 0.1s; }
+.feature-card:nth-child(3) { animation-delay: 0.2s; }
+.feature-icon {
+    font-size: 32px;
+    margin-bottom: 16px;
+}
+.feature-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+.feature-card p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 768px) { .features { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+        <div class="hero-eyebrow">
+            <span>●</span> Project Allocation System
+        </div>
+        <h1>Pick Your <span class="highlight">Problem.</span><br>Build the Future.</h1>
+        <p>A streamlined platform for students to discover and claim project problem statements — one per student, no conflicts, no chaos.</p>
+        <div class="hero-actions">
+            <a href="/student" class="btn btn-xl btn-student">→ Student Portal</a>
+            <a href="/admin" class="btn btn-xl btn-primary">⚙ Admin Panel</a>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3>First Come, First Served</h3>
+            <p>Each problem statement can only be claimed once. Real-time locking ensures no two students get the same project.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📋</div>
+            <h3>CSV Upload by Admin</h3>
+            <p>Admin uploads a CSV of problem statements. Students instantly see the live list with availability status.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Excel / CSV Export</h3>
+            <p>Download the complete registration data with student details and their chosen projects in one click.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

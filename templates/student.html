@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+{% block title %}Student Portal — ProjectAlloc{% endblock %}
+{% block extra_styles %}
+<style>
+.student-wrap { padding: 40px 0 80px; }
+.layout { display: grid; grid-template-columns: 420px 1fr; gap: 32px; align-items: start; }
+.form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    position: sticky;
+    top: 90px;
+}
+.form-card h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.form-card .sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+.roll-selector {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 4px;
+}
+.roll-btn {
+    aspect-ratio: 1;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.roll-btn:hover:not(.taken):not(.selected) {
+    border-color: var(--accent);
+    color: var(--text);
+    background: rgba(233,69,96,0.08);
+}
+.roll-btn.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+.roll-btn.taken {
+    background: rgba(107,114,128,0.1);
+    color: rgba(107,114,128,0.4);
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+.selected-roll-display {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    margin-top: 8px;
+    min-height: 20px;
+}
+.submit-btn {
+    width: 100%;
+    padding: 16px;
+    justify-content: center;
+    font-size: 16px;
+    border-radius: 12px;
+    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+}
+.submit-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+}
+.submit-btn:hover::after { transform: translateX(100%); }
+.problems-panel h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.problems-panel .sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+.filter-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.filter-btn.active, .filter-btn:hover { border-color: var(--accent); color: var(--text); background: rgba(233,69,96,0.08); }
+.search-input-wrap { position: relative; flex: 1; min-width: 200px; }
+.search-input-wrap input { padding-left: 36px; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; }
+.problems-list { display: flex; flex-direction: column; gap: 12px; }
+.prob-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+.prob-card:not(.taken):hover {
+    border-color: var(--accent);
+    transform: translateX(4px);
+    background: rgba(233,69,96,0.03);
+}
+.prob-card.selected-prob {
+    border-color: var(--accent);
+    background: rgba(233,69,96,0.06);
+    transform: translateX(4px);
+}
+.prob-card.selected-prob::before {
+    content: '✓';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: white;
+    font-weight: 700;
+}
+.prob-card.taken {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.prob-card.taken::after {
+    content: '🔒 Claimed';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+}
+.prob-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.prob-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+}
+.prob-title { font-size: 15px; font-weight: 700; padding-right: 80px; line-height: 1.3; }
+.prob-desc { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.no-problems {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+}
+.no-problems .icon { font-size: 56px; margin-bottom: 16px; }
+.success-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+.success-overlay.show { opacity: 1; pointer-events: all; }
+.success-modal {
+    background: var(--surface);
+    border: 1px solid var(--success);
+    border-radius: 24px;
+    padding: 48px 40px;
+    text-align: center;
+    max-width: 440px;
+    width: 90%;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.success-overlay.show .success-modal { transform: scale(1); }
+.success-icon { font-size: 64px; margin-bottom: 20px; }
+.success-modal h2 { font-size: 28px; font-weight: 800; color: var(--success); margin-bottom: 10px; }
+.success-modal p { color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .form-card { position: static; } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container student-wrap">
+    <div class="page-header" style="padding: 40px 0 32px; text-align:left;">
+        <h1 style="font-size:clamp(28px,4vw,48px);">Student <span class="highlight">Registration</span></h1>
+        <p style="color:var(--muted); margin-top:6px;">Choose your roll number and a problem statement. Each is available only once.</p>
+    </div>
+
+    <div class="layout">
+        <!-- Form -->
+        <div class="form-card">
+            <h2>Your Details</h2>
+            <p class="sub">Fill in your information below</p>
+
+            <div class="form-group">
+                <label>Roll Number (1–60)</label>
+                <div class="roll-selector" id="rollSelector">
+                    {% for i in range(1, 61) %}
+                    {% set roll_str = i|string %}
+                    <button type="button"
+                        class="roll-btn {% if roll_str in registrations %}taken{% endif %}"
+                        data-roll="{{ i }}"
+                        {% if roll_str in registrations %}disabled title="Roll {{ i }} already registered"{% endif %}
+                        onclick="selectRoll(this, {{ i }})">{{ '%02d'|format(i) }}</button>
+                    {% endfor %}
+                </div>
+                <div class="selected-roll-display" id="selectedRollDisplay">No roll selected</div>
+            </div>
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="studentName" placeholder="e.g. Arun Kumar" autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label>Branch</label>
+                <select id="studentBranch">
+                    <option value="">Select branch</option>
+                    <option>CSE</option>
+                    <option>ECE</option>
+                    <option>EEE</option>
+                    <option>MECH</option>
+                    <option>CIVIL</option>
+                    <option>IT</option>
+                    <option>AIDS</option>
+                    <option>AIML</option>
+                    <option>CSD</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Email ID</label>
+                <input type="email" id="studentEmail" placeholder="student@college.edu">
+            </div>
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <input type="tel" id="studentMobile" placeholder="10-digit mobile number" maxlength="10">
+            </div>
+
+            <div class="form-group" id="selectedProblemWrap" style="display:none;">
+                <label>Selected Problem</label>
+                <div style="background:rgba(233,69,96,0.08); border:1px solid rgba(233,69,96,0.3); border-radius:10px; padding:14px;">
+                    <div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); margin-bottom:4px;" id="selProbId"></div>
+                    <div style="font-size:14px; font-weight:700; color:var(--accent);" id="selProbTitle"></div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary submit-btn" onclick="submitRegistration()">
+                🚀 Register Now
+            </button>
+        </div>
+
+        <!-- Problems -->
+        <div class="problems-panel">
+            <h2>Problem <span class="highlight">Statements</span></h2>
+            <p class="sub" id="availableCount">Loading problems...</p>
+
+            <div class="filter-bar">
+                <button class="filter-btn active" data-domain="all" onclick="filterDomain(this)">All</button>
+                <div class="search-input-wrap">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="Search problems..." oninput="filterSearch(this.value)" style="background:var(--surface); width:100%;">
+                </div>
+            </div>
+
+            <div class="problems-list" id="problemsList">
+                <div class="no-problems"><div class="icon">⏳</div><p>Loading...</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="success-overlay" id="successOverlay" onclick="closeSuccess()">
+    <div class="success-modal" onclick="event.stopPropagation()">
+        <div class="success-icon">🎉</div>
+        <h2>You're In!</h2>
+        <p id="successMsg">Successfully registered for your project.</p>
+        <button class="btn btn-success" style="padding:14px 40px;" onclick="closeSuccess()">Back to Portal</button>
+    </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+let allProblems = [];
+let takenIds = new Set();
+let selectedRoll = null;
+let selectedProblemId = null;
+let currentDomain = 'all';
+let searchQuery = '';
+
+async function loadProblems() {
+    const res = await fetch('/api/problems');
+    const data = await res.json();
+    allProblems = data.problems;
+    takenIds = new Set(data.taken);
+    renderProblems();
+    buildDomainFilters();
+    updateAvailableCount();
+}
+
+function updateAvailableCount() {
+    const avail = allProblems.filter(p => !takenIds.has(p.id)).length;
+    document.getElementById('availableCount').textContent = 
+        `${allProblems.length} problems · ${avail} available · ${takenIds.size} claimed`;
+}
+
+function buildDomainFilters() {
+    const domains = [...new Set(allProblems.map(p => p.domain).filter(Boolean))];
+    const bar = document.querySelector('.filter-bar');
+    const search = bar.querySelector('.search-input-wrap');
+    domains.forEach(d => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.setAttribute('data-domain', d);
+        btn.textContent = d;
+        btn.onclick = () => filterDomain(btn);
+        bar.insertBefore(btn, search);
+    });
+}
+
+function renderProblems() {
+    const list = document.getElementById('problemsList');
+    let filtered = allProblems;
+    if (currentDomain !== 'all') filtered = filtered.filter(p => p.domain === currentDomain);
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(p => p.title.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
+    }
+    if (!filtered.length) {
+        list.innerHTML = `<div class="no-problems"><div class="icon">📭</div><p>No problems found.</p></div>`;
+        return;
+    }
+    list.innerHTML = filtered.map(p => {
+        const taken = takenIds.has(p.id);
+        const sel = p.id === selectedProblemId;
+        return `<div class="prob-card ${taken ? 'taken' : ''} ${sel ? 'selected-prob' : ''}" 
+                    data-id="${p.id}" 
+                    onclick="${taken ? '' : `selectProblem('${p.id}')`}">
+            <div class="prob-meta">
+                <span class="prob-num">#${p.id}</span>
+                ${p.domain ? `<span class="badge badge-cyan">${p.domain}</span>` : ''}
+                ${taken ? '<span class="badge badge-muted">Taken</span>' : '<span class="badge badge-success">Available</span>'}
+            </div>
+            <div class="prob-title">${p.title}</div>
+            ${p.description ? `<div class="prob-desc">${p.description}</div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function filterDomain(btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentDomain = btn.getAttribute('data-domain');
+    renderProblems();
+}
+
+function filterSearch(val) {
+    searchQuery = val;
+    renderProblems();
+}
+
+function selectRoll(btn, roll) {
+    document.querySelectorAll('.roll-btn.selected').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedRoll = roll;
+    document.getElementById('selectedRollDisplay').textContent = `Roll No: ${String(roll).padStart(2,'0')} selected`;
+}
+
+function selectProblem(id) {
+    if (takenIds.has(id)) return;
+    selectedProblemId = id;
+    const prob = allProblems.find(p => p.id === id);
+    if (prob) {
+        document.getElementById('selectedProblemWrap').style.display = 'block';
+        document.getElementById('selProbId').textContent = `Problem #${prob.id} · ${prob.domain}`;
+        document.getElementById('selProbTitle').textContent = prob.title;
+    }
+    renderProblems();
+}
+
+async function submitRegistration() {
+    const name = document.getElementById('studentName').value.trim();
+    const branch = document.getElementById('studentBranch').value;
+    const email = document.getElementById('studentEmail').value.trim();
+    const mobile = document.getElementById('studentMobile').value.trim();
+    if (!selectedRoll) return showToast('Please select your roll number', 'error');
+    if (!name) return showToast('Please enter your name', 'error');
+    if (!branch) return showToast('Please select your branch', 'error');
+    if (!email || !email.includes('@')) return showToast('Please enter a valid email', 'error');
+    if (!mobile || mobile.length !== 10) return showToast('Please enter a valid 10-digit mobile number', 'error');
+    if (!selectedProblemId) return showToast('Please select a problem statement', 'error');
+
+    try {
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ roll_no: selectedRoll, name, branch, email, mobile, problem_id: selectedProblemId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const prob = allProblems.find(p => p.id === selectedProblemId);
+            document.getElementById('successMsg').textContent = 
+                `${name} (Roll #${String(selectedRoll).padStart(2,'0')}) — ${prob?.title || ''}`;
+            document.getElementById('successOverlay').classList.add('show');
+            await loadProblems();
+            document.querySelector(`.roll-btn[data-roll="${selectedRoll}"]`)?.classList.add('taken');
+            document.querySelector(`.roll-btn[data-roll="${selectedRoll}"]`)?.classList.remove('selected');
+        } else {
+            showToast(data.error || 'Registration failed', 'error');
+        }
+    } catch(e) { showToast('Network error', 'error'); }
+}
+
+function closeSuccess() {
+    document.getElementById('successOverlay').classList.remove('show');
+    selectedRoll = null;
+    selectedProblemId = null;
+    document.getElementById('selectedRollDisplay').textContent = 'No roll selected';
+    document.getElementById('selectedProblemWrap').style.display = 'none';
+    document.getElementById('studentName').value = '';
+    document.getElementById('studentBranch').value = '';
+    document.getElementById('studentEmail').value = '';
+    document.getElementById('studentMobile').value = '';
+}
+
+// Poll every 15 seconds to update availability
+loadProblems();
+setInterval(loadProblems, 15000);
+</script>
+{% endblock %}
